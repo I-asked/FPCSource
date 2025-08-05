@@ -21,22 +21,32 @@
 *****************************************************************************}
 procedure do_mkdir(const s: rawbytestring);
 begin
-
+  if _mkdir(PAnsiChar(s), MODE_MKDIR) < 0 then
+    Errno2Inoutres;
 end;
 
 procedure do_rmdir(const s: rawbytestring);
 begin
-
+  if _rmdir(PAnsiChar(s)) < 0 then
+    Errno2Inoutres;
 end;
 
 procedure do_chdir(const s: rawbytestring);
 begin
-
+  if _chdir(PAnsiChar(s)) < 0 then
+    Errno2Inoutres;
 end;
 
 procedure do_GetDir(DriveNr: byte; var Dir: RawByteString);
+var
+  buf          : array[0..2047] of AnsiChar;
 begin
-
+  Dir := '';
+  if _getcwd(@buf[0], sizeof(buf)) <> nil then
+  begin
+    Dir := buf;
+    setcodepage(Dir,DefaultFileSystemCodePage,false);
+  end;
 end;
 
 

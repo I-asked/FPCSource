@@ -25,7 +25,6 @@ uses
 
 {$linklib c}
 {$linklib gcc}
-{$linklib sysbase}
 
 {$define NDS_INTERFACE}
 {$include inc/mm_types.inc}

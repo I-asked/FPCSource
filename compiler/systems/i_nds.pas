@@ -39,7 +39,7 @@ unit i_nds;
             cpu          : cpu_arm;
             unit_env     : '';
             extradefines : '';
-            exeext       : '.bin';
+            exeext       : '.nds';
             defext       : '.def';
             scriptext    : '.sh';
             smartext     : '.sl';

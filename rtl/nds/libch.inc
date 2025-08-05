@@ -18,6 +18,10 @@ type
   time_t = longint;
   ptime_t = ^time_t;
 
+  errno_t = longint;
+
+  mode_t = longint;
+
   Ptm = ^tm;
   tm = record
     tm_sec: longint;
@@ -57,8 +61,9 @@ type
   TSort = function (const a, b: pointer): integer;
 procedure qsort(__base: pointer; __nmemb: integer; __size: integer; __compar: TSort); cdecl; external;
 
-var
-  errno: plongint; external name '__errno'; 
+function fpgeterrno:longint; external name 'FPC_SYS_GETERRNO';
+procedure fpseterrno(err:longint); external name 'FPC_SYS_SETERRNO';
+property errno : longint read fpgeterrno write fpseterrno;
 
 type
 {
@@ -83,14 +88,16 @@ type
   P_FILE = ^_FILE;
  }
  
-   P_iobuf = ^_iobuf;
-   _iobuf = record
-        reserved : longint;
-     end;
-   _FILE = _iobuf;
-   P_FILE = ^_FILE;
-   PP_FILE = ^P_FILE;
- 
+  _FILE = record
+    reserved: longint;
+  end;
+  P_FILE = ^_FILE;
+  PP_FILE = ^P_FILE;
+
+procedure _stdin; cdecl; external name 'stdin';
+procedure _stdout; cdecl; external name 'stdout';
+procedure _stderr; cdecl; external name 'stderr';
+
 const
   SEEK_SET = 0;
   SEEK_CUR = 1;
@@ -231,11 +238,13 @@ function _close(fildes:longint): longint; cdecl; external name 'close';
 function _unlink(path:PAnsiChar): longint; cdecl; external name 'unlink';
 function _rename(para1: PAnsiChar; para2: PAnsiChar): longint; cdecl; external name 'rename';
 function _access(path: PAnsiChar; mode: longint): longint; cdecl; external name 'access';
-function _tell(fildes: longint): longint; cdecl; external name 'tell';
 function _isatty(fildes: longint): longint; cdecl; external name 'isatty';
 function _truncate(fildes: longint; len: longint): longint; cdecl; external name 'truncate';
 
-
+function _getcwd(pt: PAnsiChar; size: longint): PAnsiChar; cdecl; external name 'getcwd';
+function _chdir(path: PAnsiChar): longint; cdecl; external name 'chdir';
+function _rmdir(filename: PAnsiChar): longint; cdecl; external name 'rmdir';
+function _mkdir(path: PAnsiChar; mode: mode_t): longint; cdecl; external name 'mkdir';
 
 const
  F_GETFL      = 1;        // get file status flags
@@ -262,14 +271,14 @@ const
  O_RDWR       =$00000002; // open for read and write
  O_ACCMODE    =$00000003; // access flags mask
  O_reserved1  =$00000004; // reserved
- O_reserved2  =$00000008; // reserved
- O_APPEND     =$00000010; // writes done at end of file
- O_CREAT      =$00000020; // create new file
- O_TRUNC      =$00000040; // truncate existing file
- O_EXCL       =$00000080; // exclusive open
- O_NOCTTY     =$00000100; // no controlling terminal--unsupported
- O_BINARY     =$00000200; // binary file--all files
- O_NDELAY     =$00000400; // nonblocking flag
+ //O_reserved2  =$00000008; // reserved
+ O_APPEND     =$00000008; // writes done at end of file
+ O_CREAT      =$00000200; // create new file
+ O_TRUNC      =$00000400; // truncate existing file
+ O_EXCL       =$00000800; // exclusive open
+ O_NOCTTY     =$00008000; // no controlling terminal--unsupported
+ //O_BINARY     =$00000000; // binary file--all files
+ O_NDELAY     =$00004000; // nonblocking flag
  O_reserved3  =$00000800; // reserved
  O_SYNC       =$00001000; // synchronized I/O file integrity
  O_DSYNC      =$00002000; // synchronized I/O data integrity
@@ -424,4 +433,23 @@ Sys_EDQUOT      = 122;  { Quota exceeded }
   based on infos from www.linuxassembly.org }
 
 Sys_ERROR_MAX = $fff;
+
+const
+  S_IRUSR = &0000400;
+  S_IWUSR = &0000200;
+  S_IXUSR = &0000100;
+  S_IRWXU = S_IRUSR or S_IWUSR or S_IXUSR;
+  S_IRGRP = &0000040;
+  S_IWGRP = &0000020;
+  S_IXGRP = &0000010;
+  S_IRWXG = S_IRGRP or S_IWGRP or S_IXGRP;
+  S_IROTH = &0000004;
+  S_IWOTH = &0000002;
+  S_IXOTH = &0000001;
+  S_IRWXO = S_IROTH or S_IWOTH or S_IXOTH;
+
+  MODE_MKDIR = S_IWUSR OR S_IRUSR OR
+               S_IWGRP OR S_IRGRP OR
+               S_IWOTH OR S_IROTH OR
+               S_IXUSR OR S_IXGRP OR S_IXOTH;
  

@@ -24,11 +24,9 @@ uses
 {$ENDIF FPC_DOTTEDUNITS}
 
 {$linklib nds9}
-{$linklib fat}
 
 {$linklib c}
 {$linklib gcc}
-{$linklib sysbase}
 
 {$define NDS_INTERFACE}
 {$include gbfs.inc}

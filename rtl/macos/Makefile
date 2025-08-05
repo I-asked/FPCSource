@@ -1317,6 +1317,12 @@ SHAREDLIBEXT=.so
 SHORTSUFFIX=gba
 endif
 ALL_EXEEXT+=.gba
+ifeq ($(OS_TARGET),nds)
+EXEEXT=.nds
+SHAREDLIBEXT=.so
+SHORTSUFFIX=nds
+endif
+ALL_EXEEXT+=.nds
 ifeq ($(OS_TARGET),symbian)
 SHAREDLIBEXT=.dll
 SHORTSUFFIX=symbian

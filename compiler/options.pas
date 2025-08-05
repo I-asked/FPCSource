@@ -2182,7 +2182,7 @@ begin
     system_arm_gba:
       target_unsup_features:=[f_dynlibs];
     system_arm_nds:
-      target_unsup_features:=[f_threading,f_commandargs,f_fileio,f_textio,f_consoleio,f_dynlibs];
+      target_unsup_features:=[f_dynlibs];
     system_i386_nativent:
       // until these features are implemented, they are disabled in the compiler
       target_unsup_features:=[f_stackcheck];
@@ -5393,6 +5393,17 @@ begin
 
 {$ifdef arm}
   case target_info.system of
+    system_arm_nds:
+      begin
+        { set default cpu type to ARMv5TE for NDS unless specified otherwise }
+        if not option.CPUSetExplicitly then
+          init_settings.cputype:=cpu_armv4t;
+        if not option.OptCPUSetExplicitly then
+          if apptype=app_arm7 then
+            init_settings.optimizecputype:=cpu_armv4t
+          else
+            init_settings.optimizecputype:=cpu_armv5te;
+      end;
     system_arm_ios:
       begin
         { set default cpu type to ARMv7 for Darwin unless specified otherwise, and fpu

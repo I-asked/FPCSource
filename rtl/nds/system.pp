@@ -24,6 +24,7 @@ interface
 {$define FPC_HAS_FEATURE_TEXTIO}
 {$define FPC_HAS_FEATURE_FILEIO}
 {$define FPC_HAS_FEATURE_THREADING}
+{$define FPC_ANSI_TEXTFILEREC}
 
 {$define CPUARM_HAS_UMULL}
 {$ifdef FPC_HAS_INTERNAL_BSR}
@@ -57,10 +58,10 @@ const
   MaxPathLen = 1024; // BSDs since 1993, Solaris 10, Darwin
   AllFilesMask = '*';
 
-  UnusedHandle    = -1;
-  StdInputHandle  = 0;
-  StdOutputHandle = 1;
-  StdErrorHandle  = 2;
+  UnusedHandle    : THandle = -1;
+  StdInputHandle  : THandle = 0;
+  StdOutputHandle : THandle = 0;
+  StdErrorHandle  : THandle = 0;
 
   FileNameCaseSensitive : boolean = true;
   FileNameCasePreserving: boolean = true;
@@ -73,7 +74,6 @@ var
   argc: LongInt = 0;
   argv: PPAnsiChar;
   envp: PPAnsiChar;
-//  errno: integer;
   fake_heap_end: ^byte; cvar; external;
   irq_vector: integer; external name '__irq_vector';
 
@@ -239,11 +239,20 @@ end;
 
 procedure SysInitStdIO;
 begin
+  StdInputHandle := THandle(PP_FILE(@_stdin)^);
+  StdOutputHandle := THandle(PP_FILE(@_stdout)^);
+  StdErrorHandle := THandle(PP_FILE(@_stderr)^);
+
   OpenStdIO(Input,fmInput,StdInputHandle);
   OpenStdIO(Output,fmOutput,StdOutputHandle);
   OpenStdIO(ErrOutput,fmOutput,StdErrorHandle);
   OpenStdIO(StdOut,fmOutput,StdOutputHandle);
   OpenStdIO(StdErr,fmOutput,StdErrorHandle);
+
+  Textrec(Output).FlushFunc := @Flush;
+  Textrec(ErrOutput).FlushFunc := @Flush;
+  Textrec(StdOut).FlushFunc := @Flush;
+  Textrec(StdErr).FlushFunc := @Flush;
 end;
 
 
@@ -264,6 +273,7 @@ begin
 { Setup heap }
   InitHeap;
   SysInitExceptions;
+  initunicodestringmanager;
 
   SetupCmdLine;
 

@@ -120,15 +120,14 @@
 {$endif ARM7}
 
 {$ifdef ARM7}
-  {$linklib libnds7.a}
+  {$linklib nds7}
 {$endif ARM7}
 {$ifdef ARM9}
-  {$linklib libnds9.a}
+  {$linklib nds9}
 {$endif ARM9}
 
-{$linklib libc.a}
-{$linklib libgcc.a}
-{$linklib libsysbase.a}
+{$linklib c}
+{$linklib gcc}
 
 {$endif NDS_INC}
 

@@ -57,7 +57,6 @@ uses
 {$linklib c}
 {$linklib gcc}
 {$linklib g}
-{$linklib sysbase}
 
 {$define NDS_INTERFACE}
 {$include nds/ndsinclude.inc}

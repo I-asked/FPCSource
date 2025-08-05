@@ -48,3 +48,21 @@ function S_ISSOCK(m: longint): boolean; inline;
 begin
   result := (m and _IFMT) = _IFSOCK;
 end;
+
+function aeabi_read_tp : pointer; cdecl; external name '__aeabi_read_tp';
+
+procedure _errno_tpoff; cdecl; external name 'errno(gottpoff)';
+
+function myfpgeterrno : longint; [public, alias: 'FPC_SYS_GETERRNO'];
+type
+  plongint = ^longint;
+begin
+  Result := plongint(longword(aeabi_read_tp) + longword(@_errno_tpoff))^;
+end;
+
+procedure myfpseterrno(err : longint); [public, alias: 'FPC_SYS_SETERRNO'];
+type
+  plongint = ^longint;
+begin
+  plongint(longword(aeabi_read_tp) + longword(@_errno_tpoff))^ := err;
+end;

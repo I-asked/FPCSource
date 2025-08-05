@@ -414,11 +414,10 @@ const
 
 {$IFDEF NDS}
   SDLLibName = 'libSDL.a';
-  {$linklib libSDL.a}
-  {$linklib libnds9.a}
-  {$linklib libc.a}
-  {$linklib libgcc.a}
-  {$linklib libsysbase.a}
+  {$linklib SDL}
+  {$linklib nds9}
+  {$linklib c}
+  {$linklib gcc}
 {$ENDIF}
 
 {$IFDEF MORPHOS}

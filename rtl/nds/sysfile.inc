@@ -22,14 +22,14 @@
                All these functions can set InOutRes on errors
 ****************************************************************************}
 
-
 procedure NDS2PASErr(Err: longint);
 begin
   if Err = 0 then { Else it will go through all the cases }
    exit;
   case Err of
    Sys_ENFILE,
-   Sys_EMFILE : Inoutres := 4;
+   Sys_EMFILE,
+   Sys_ENOSYS : Inoutres := 4;
    Sys_ENOENT : Inoutres := 2;
     Sys_EBADF : Inoutres := 6;
    Sys_ENOMEM,
@@ -58,7 +58,7 @@ END;
 
 procedure Errno2Inoutres;
 begin
-  NDS2PASErr(errno^);
+  NDS2PASErr(errno);
 end;
 
 procedure SetFileError(var Err: longint);
@@ -66,7 +66,7 @@ begin
   if Err >= 0 then
     InOutRes := 0
   else begin
-    Err := errno^;
+    Err := errno;
     NDS2PASErr(Err);
     Err := 0;
   end;
@@ -80,8 +80,7 @@ procedure do_close(handle: THandle);
 var
   res: longint;
 begin
-  //fclose(P_FILE(Handle));
-  res := _close(handle);
+  res := fclose(P_FILE(Handle));
   if res <> 0 then
     SetFileError(res)
   else
@@ -92,7 +91,6 @@ procedure do_erase(p: PAnsiChar; pchangeable: boolean);
 var
   res: longint;
 begin
-  //unlink(p);
   res := _unlink(p);
   if res <> 0 then
     SetFileError(res)
@@ -104,7 +102,6 @@ procedure do_rename(p1, p2: PAnsiChar; p1changeable, p2changeable: boolean);
 var
   res: longint;
 begin
-  //rename(p1, p2);
   res := _rename(p1, p2);
   if res <> 0 then
     SetFileError(res)
@@ -116,8 +113,7 @@ function do_write(h: THandle; addr: pointer; len: longint) : longint;
 var
   res: longint;
 begin
-  //result := fwrite(addr, 1, len, P_FILE(h));
-  res := _write(h, addr, len);
+  res := fwrite(addr, 1, len, P_FILE(h));
   if res > 0 then
     InOutRes := 0
   else
@@ -129,8 +125,7 @@ function do_read(h: THandle; addr: pointer; len: longint) : longint;
 var
   res: longint;
 begin
-  //result := fread(addr, 1, len, P_FILE(h));
-  res := _read(h, addr, len);
+  res := fread(addr, 1, len, P_FILE(h));
   if res > 0 then
     InOutRes := 0
   else
@@ -144,8 +139,7 @@ var
 begin
   InOutRes := 0;
 
-  //result := ftell(P_FILE(handle));
-  res := _tell(handle);
+  res := ftell(P_FILE(handle));
   if res < 0 then
     SetFileError(res)
   else
@@ -157,8 +151,7 @@ procedure do_seek(handle: THandle; pos: longint);
 var
   res: longint;
 begin
-  //fseek(P_FILE(handle), pos, SEEK_SET);
-  _lseek(handle, pos, SEEK_SET);
+  fseek(P_FILE(handle), pos, SEEK_SET);
   if res < 0 then
     SetFileError(res)
   else
@@ -169,8 +162,7 @@ function do_seekend(handle: THandle): longint;
 var
   res: longint;
 begin
-  //result := fseek(P_FILE(handle), 0, SEEK_END);
-  res := _lseek(handle, 0, SEEK_END);
+  res := fseek(P_FILE(handle), 0, SEEK_END);
   if res < 0 then
     SetFileError(res)
   else
@@ -183,8 +175,7 @@ var
   res     : longint;
   statbuf : TStat;
 begin
-  //res := fstat(fileno(P_FILE(handle)), statbuf);
-  res := fstat(handle, statbuf);
+  res := fstat(fileno(P_FILE(handle)), statbuf);
   if res = 0 then
   begin
     InOutRes := 0;
@@ -201,8 +192,7 @@ procedure do_truncate(handle: THandle; pos: longint);
 var
   res     : longint;
 begin
-  //ftruncate(fileno(P_FILE(handle)), pos);
-  res := _truncate(handle, pos);
+  res := ftruncate(fileno(P_FILE(handle)), pos);
   if res <> 0 then
     SetFileError(res)
   else
@@ -218,7 +208,7 @@ procedure do_open(var f;p:PAnsiChar;flags:longint; pchangeable: boolean);
   when (flags and $1000) there is no check for close (needed for textfiles)
 }
 var
-  oflags: longint;
+  oflags: string[10];
 begin
 { close first if opened }
   if ((flags and $10000)=0) then
@@ -239,23 +229,22 @@ begin
 { We do the conversion of filemodes here, concentrated on 1 place }
   case (flags and 3) of
    0 : begin
-         oflags := O_RDONLY;
+         oflags := 'rb'#0;
          filerec(f).mode := fminput;
        end;
    1 : begin
-         oflags := O_WRONLY;
+         if (flags and $1000)=$1000 then
+           oflags := 'w+b' else
+           oflags := 'wb';
          filerec(f).mode := fmoutput;
        end;
    2 : begin
-         oflags := O_RDWR;
+         if (flags and $1000)=$1000 then
+           oflags := 'w+' else
+           oflags := 'r+';
          filerec(f).mode := fminout;
        end;
   end;
-  if (flags and $1000) = $1000 then
-   oflags := oflags or (O_CREAT or O_TRUNC)
-  else
-   if (flags and $100) = $100 then
-    oflags := oflags or (O_APPEND);
 { empty name is special }
   if p[0] = #0 then
    begin
@@ -274,16 +263,10 @@ begin
      exit;
    end;
 { real open call }
-  errno^ := 0;
-  FileRec(f).Handle := _open(p, oflags, 438);
+  errno := 0;
+  FileRec(f).Handle := THandle(fopen(p, @oflags[1]));
   { open somtimes returns > -1 but errno was set }
-  if (errno^ <> 0) or (longint(FileRec(f).Handle) < 0) then
-    if (errno^ = Sys_EROFS) and ((OFlags and O_RDWR) <> 0) then
-    begin  // i.e. for cd-rom
-      Oflags := Oflags and not(O_RDWR);
-      FileRec(f).Handle := _open(p,oflags,438);
-    end;
-  if (errno^ <> 0) or (longint(FileRec(f).Handle) < 0) then
+  if FileRec(f).Handle = 0 then
     begin
       Errno2Inoutres;
       FileRec(f).mode:=fmclosed;
@@ -299,12 +282,7 @@ function do_isdevice(handle: THandle): boolean;
 var
   StatRec: TStat;
 begin
-  FStat (Handle, StatRec);
-  case StatRec.st_Mode and _IFMT of
-   _IFCHR, _IFIFO, _IFSOCK: Do_IsDevice := true
-  else
-   Do_IsDevice := false;
-  end;
+  Do_IsDevice := (handle >= 0) and (handle <= 2);
 end;
 
 

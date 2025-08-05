@@ -37,7 +37,7 @@ INC=$(RTL)/inc
 COMMON=$(RTL)/common
 PROCINC=$(RTL)/$(CPU_TARGET)
 UNITPREFIX=rtl
-LOADERS=prt07 prt09 cprt07 cprt09
+#LOADERS=prt07 prt09 cprt07 cprt09
 
 ifdef RELEASE
 override FPCOPT+=-Ur
@@ -64,20 +64,3 @@ SYSCPUDEPS=$(addprefix $(PROCINC)/,$(CPUINCNAMES))
 # Put system unit dependencies together.
 SYSDEPS=$(SYSINCDEPS) $(SYSCPUDEPS) $(INC)/softfpu.pp
 override FPC_SYSTEM_OPT += @rtl.cfg
-
-#
-# Loaders
-#
-
-prt07$(OEXT) : prt07.as
-        $(AS) $(ASTARGET) -o $(UNITTARGETDIRPREFIX)prt07$(OEXT) prt07.as
-
-prt09$(OEXT) : prt09.as
-        $(AS) $(ASTARGET) -o $(UNITTARGETDIRPREFIX)prt09$(OEXT) prt09.as
-
-cprt07$(OEXT) : cprt07.as
-        $(AS) $(ASTARGET) -o $(UNITTARGETDIRPREFIX)cprt07$(OEXT) cprt07.as
-
-cprt09$(OEXT) : cprt09.as
-        $(AS) $(ASTARGET) -o $(UNITTARGETDIRPREFIX)cprt09$(OEXT) cprt09.as
-

@@ -25,7 +25,6 @@ uses
 
 {$linklib c}
 {$linklib gcc}
-{$linklib sysbase}
 
 {$define NDS_INTERFACE}
 {$include inc/dswifi7.inc}

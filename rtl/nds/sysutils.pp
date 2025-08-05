@@ -173,7 +173,6 @@ begin
 end;
 
 
-(****** end of non portable routines ******)
 
 
 Function FileAge (Const FileName : RawByteString): Int64;
@@ -203,6 +202,8 @@ begin
   FileExists := _Access(pointer(SystemFileName), F_OK) = 0;
 end;
 
+
+(****** end of non portable routines ******)
 
 
 Function InternalFindFirst (Const Path : RawByteString; Attr : Longint; out Rslt : TAbstractSearchRec; var Name: RawByteString) : Longint;

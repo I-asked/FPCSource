@@ -5393,17 +5393,6 @@ begin
 
 {$ifdef arm}
   case target_info.system of
-    system_arm_nds:
-      begin
-        { set default cpu type to ARMv5TE for NDS unless specified otherwise }
-        if not option.CPUSetExplicitly then
-          init_settings.cputype:=cpu_armv4t;
-        if not option.OptCPUSetExplicitly then
-          if apptype=app_arm7 then
-            init_settings.optimizecputype:=cpu_armv4t
-          else
-            init_settings.optimizecputype:=cpu_armv5te;
-      end;
     system_arm_ios:
       begin
         { set default cpu type to ARMv7 for Darwin unless specified otherwise, and fpu

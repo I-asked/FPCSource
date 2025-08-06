@@ -867,11 +867,44 @@ implementation
               ;
           end;
 {$endif m68k}
+{$ifdef arm}
+        case apptype of
+          app_arm9: undef_system_macro('NDS9');
+          app_arm7: undef_system_macro('NDS7');
+        else
+          ;
+        end;
+{$endif arm}
         if apptype in [app_cui,app_com] then
           undef_system_macro('CONSOLE');
         apptype:=NewAppType;
         if apptype in [app_cui,app_com] then
           def_system_macro('CONSOLE');
+{$ifdef arm}
+        case target_info.system of
+          system_arm_nds:
+            begin
+              case apptype of
+                app_arm9:
+                  begin
+                    def_system_macro('NDS9');
+                    current_settings.cputype:=cpu_armv5te;
+                  end;
+                app_arm7:
+                  begin
+                    def_system_macro('NDS7');
+                    current_settings.cputype:=cpu_armv4t;
+                  end;
+              else
+                ;
+                //internalerror(2019050935);
+              end;
+              current_settings.optimizecputype:=cpu_armv5te;
+            end;
+        else
+          ;
+        end;
+{$endif arm}
       end;
 {*****************************************************************************
                            Conditional Directives

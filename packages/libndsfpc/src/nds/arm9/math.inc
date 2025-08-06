@@ -214,73 +214,50 @@ begin
   dotf32 := mulf32(a[0], b[0]) + mulf32(a[1], b[1]) + mulf32(a[2], b[2]);
 end;
 
-Function countLeadingZeros32( a:cuint32 ): cint8;
+function _clz(a: uint32): uint32; assembler; nostackframe;
+asm
+  clz r0,a
+  bx  lr
+end;
 
-    const countLeadingZerosHigh:array[0..255] of cint8 = (
-        8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    );
-Var
-    shiftCount: cint8;
-Begin
+function _clzll(a: uint64): uint32; inline;
+begin
+  Result := _clz(uint32(a));
+  if Result = 32 then
+    Result := _clz(a shr 32);
+end;
 
-    shiftCount := 0;
-    if ( a < $10000 ) then
-    Begin
-        shiftCount := shiftcount + 16;
-        a := a shl 16;
-    End;
-    if ( a < $1000000 ) then
-    Begin
-        shiftCount := shiftcount + 8;
-        a := a shl 8;
-    end;
-    shiftCount := shiftcount + countLeadingZerosHigh[ a shr 24 ];
-    countLeadingZeros32:= shiftCount;
-End;
+procedure _dotv3lh(a: pcint32; out l, h: uint32); assembler; nostackframe;
+asm
+  push  {v1-v5}
 
-function countLeadingZeros64( a : cuint64): cint8;
-var
- shiftcount : cint8;
-Begin
-    shiftCount := 0;
-    if ( a <  cuint64(cuint64(1)  shl 32 )) then
-        shiftCount := shiftcount + 32
-    else
-        a := a shr 32;
-    shiftCount := shiftCount + countLeadingZeros32( a );
-    countLeadingZeros64:= shiftCount;
-End;
+  ldm   a,{v1-v3}
 
+  smull v4,v5,v1,v1
+  smlal v4,v5,v2,v2
+  smlal v4,v5,v3,v3
+
+  str   v4,[a2]
+  str   v5,[a3]
+
+  pop   {v1-v5}
+  bx    lr
+end;
 
 procedure normalizef32(a: pcint32); inline;
 var
   t, st, prod, i, totsh, sh, zc: cint32;
-  root, mh: cuint32;
+  l, h, root, mh: cuint32;
   msq: cuint64;
+  mms: cuint32 absolute msq;
   rcp: cint64;
+  rms: cuint32 absolute rcp;
 begin
-  msq := cint64(a[0]) * a[0];
-  inc(msq, cint64(a[1]) * a[1]);
-  inc(msq, cint64(a[2]) * a[2]);
-
+  _dotv3lh(a, l, h);
+  msq := l + (h shl 32);
   if msq <> 0 then
   begin
-    zc := 33 - countLeadingZeros64(msq);
+    zc := 33 - _clzll(msq);
     inc(zc);
     zc := zc and not(1);
     if zc >= 0 then
@@ -292,8 +269,9 @@ begin
     REG_DIV_NUMER^ := 1 shl 62;
     REG_DIV_DENOM_L^ := msq;
 
-    REG_SQRTCNT^ := SQRT_64;
-    while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;
+    if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
+      REG_SQRTCNT^ := SQRT_64;
+
     REG_SQRT_PARAM^ := msq shl 32;
 
     totsh := 32 + 8 - 6 + (zc shr 1);
@@ -301,9 +279,9 @@ begin
     root := REG_SQRT_RESULT^;
 
     while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
-    rcp := REG_DIV_RESULT_L^;
+    rcp := REG_DIV_RESULT^;
 
-    sh := 32 - countLeadingZeros32(cuint32(rcp shr 32));
+    sh := 32 - _clz(rms);
     dec(totsh, sh);
     rcp := rcp shr sh;
     mh := (cuint64(rcp) * root) shr 32;

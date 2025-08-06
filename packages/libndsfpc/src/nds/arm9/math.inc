@@ -49,7 +49,7 @@ function sqrt32(a: cint32): cuint32; inline;
 function sqrt64(a: cint64): cuint32; inline;
 procedure crossf32(a: pcint32; b: pcint32; res: pcint32); inline;
 function dotf32(a, b: pcint32): cint32; inline;
-procedure normalizef32(a: pcint32); inline;  
+procedure normalizef32(a: pcint32);
 {$endif NDS_INTERFACE}
 
 {$ifdef NDS_IMPLEMENTATION}
@@ -236,12 +236,11 @@ asm
   bx    lr
 end;
 
-procedure normalizef32(a: pcint32); inline;
+procedure normalizef32(a: pcint32);
 var
   t, st, prod, i, totsh, sh, zc: cint32;
   root, mh: cuint32;
   msq: cuint64;
-  mms: cuint32 absolute msq;
   rcp: cint64;
   rms: cuint32 absolute rcp;
 begin

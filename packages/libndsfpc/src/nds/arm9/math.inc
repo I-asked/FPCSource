@@ -49,7 +49,7 @@ function sqrt32(a: cint32): cuint32; inline;
 function sqrt64(a: cint64): cuint32; inline;
 procedure crossf32(a: pcint32; b: pcint32; res: pcint32); inline;
 function dotf32(a, b: pcint32): cint32; inline;
-procedure normalizef32(a: pcint32);
+procedure normalizef32(a: pcint32); cdecl; external;
 {$endif NDS_INTERFACE}
 
 {$ifdef NDS_IMPLEMENTATION}
@@ -212,83 +212,5 @@ end;
 function dotf32(a, b: pcint32): cint32; inline;
 begin
   dotf32 := mulf32(a[0], b[0]) + mulf32(a[1], b[1]) + mulf32(a[2], b[2]);
-end;
-
-function _clz(a: uint32): uint32; assembler; nostackframe;
-asm
-  clz r0,a
-  bx  lr
-end;
-
-function _clzll(a: uint64): uint32; inline;
-begin
-  Result := _clz(a shr 32);
-  if Result = 32 then
-    Result := 32 + _clz(uint32(a));
-end;
-
-function _dotv3lh(a: pcint32): uint64; assembler; nostackframe;
-asm
-  ldm   a,{a3,a4,ip}
-  smull a1,a2,a3,a3
-  smlal a1,a2,a4,a4
-  smlal a1,a2,ip,ip
-  bx    lr
-end;
-
-procedure normalizef32(a: pcint32);
-var
-  t, st, prod, i, totsh, sh, zc: cint32;
-  root, mh: cuint32;
-  msq: cuint64;
-  rcp: cint64;
-  rms: cuint32 absolute rcp;
-begin
-  msq := _dotv3lh(a);
-  if msq <> 0 then
-  begin
-    zc := 33 - _clzll(msq);
-    inc(zc);
-    zc := zc and not(1);
-    if zc >= 0 then
-      msq := msq shr zc
-    else
-      msq := msq shl -zc;
-
-    volatile(REG_DIV_NUMER^) := 1 shl 62;
-    volatile(REG_DIV_DENOM_L^) := msq;
-    if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_64_32 then
-      volatile(REG_DIVCNT^) := DIV_64_32;
-
-    volatile(REG_SQRT_PARAM^) := msq shl 32;
-    if (volatile(REG_SQRTCNT^) and SQRT_MODE_MASK) <> SQRT_64 then
-      volatile(REG_SQRTCNT^) := SQRT_64;
-
-    totsh := 32 + 8 - 6 + (zc shr 1);
-    while (volatile(REG_SQRTCNT^) and SQRT_BUSY) <> 0 do;
-    root := volatile(REG_SQRT_RESULT^);
-
-    while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
-    rcp := volatile(REG_DIV_RESULT^);
-
-    sh := 32 - _clz(rms);
-    dec(totsh, sh);
-    rcp := rcp shr sh;
-    mh := (cuint64(rcp) * root) shr 32;
-
-    for i := 0 to 2 do
-    begin
-      t := a[i];
-      st := t;
-      if t < 0 then
-        st := -st;
-
-      prod := (cuint64(cuint32(st)) * mh) shr totsh;
-      if t < 0 then
-        prod := -prod;
-
-      a[i] := prod;
-    end;
-  end;
 end;
 {$endif NDS_IMPLEMENTATION}

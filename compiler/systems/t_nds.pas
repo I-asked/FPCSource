@@ -43,6 +43,7 @@ implementation
           constructor Create; override;
           procedure SetDefaultInfo; override;
           function  MakeExecutable:boolean; override;
+          procedure InitSysInitUnitName; override;
        end;
 
 
@@ -56,9 +57,16 @@ begin
   Inherited Create;
   SharedLibFiles.doubles:=true;
   StaticLibFiles.doubles:=true;
-  // set arm9 as default apptype
-  if (apptype <> app_arm9) and (apptype <> app_arm7) then
-    apptype:=app_arm9;
+end;
+
+
+procedure TLinkerNDS.InitSysInitUnitName;
+begin
+  if not(apptype in [app_arm9,app_arm7]) then
+    if current_module.islibrary then
+      apptype:=app_arm7
+    else
+      apptype:=app_arm9;
 end;
 
 
@@ -663,8 +671,8 @@ begin
         add('}');
         add('');
         add('ASSERT(__sbss_end <= __dtcm_data_top, "DTCM data overflow; increase __dtcm_data_size or move data out of DTCM");');
-      end;
-      if apptype=app_arm7 then
+      end
+      else if apptype=app_arm7 then
       begin
         add('/* Copyright (C) 2014-2024 Free Software Foundation, Inc.');
         add('   Copying and distribution of this script, with or without modification,');

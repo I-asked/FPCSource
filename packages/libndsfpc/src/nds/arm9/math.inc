@@ -222,39 +222,30 @@ end;
 
 function _clzll(a: uint64): uint32; inline;
 begin
-  Result := _clz(uint32(a));
+  Result := _clz(a shr 32);
   if Result = 32 then
-    Result := _clz(a shr 32);
+    Result := 32 + _clz(uint32(a));
 end;
 
-procedure _dotv3lh(a: pcint32; out l, h: uint32); assembler; nostackframe;
+function _dotv3lh(a: pcint32): uint64; assembler; nostackframe;
 asm
-  push  {v1-v5}
-
-  ldm   a,{v1-v3}
-
-  smull v4,v5,v1,v1
-  smlal v4,v5,v2,v2
-  smlal v4,v5,v3,v3
-
-  str   v4,[a2]
-  str   v5,[a3]
-
-  pop   {v1-v5}
+  ldm   a,{a3,a4,ip}
+  smull a1,a2,a3,a3
+  smlal a1,a2,a4,a4
+  smlal a1,a2,ip,ip
   bx    lr
 end;
 
 procedure normalizef32(a: pcint32); inline;
 var
   t, st, prod, i, totsh, sh, zc: cint32;
-  l, h, root, mh: cuint32;
+  root, mh: cuint32;
   msq: cuint64;
   mms: cuint32 absolute msq;
   rcp: cint64;
   rms: cuint32 absolute rcp;
 begin
-  _dotv3lh(a, l, h);
-  msq := l + (h shl 32);
+  msq := _dotv3lh(a);
   if msq <> 0 then
   begin
     zc := 33 - _clzll(msq);

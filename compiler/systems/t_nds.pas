@@ -1084,7 +1084,7 @@ begin
   if success and (apptype=app_arm9) then
     begin
       success:=DoExec(FindUtil('ndstool'), '-c ' + 
-        current_module.exefilename + ' -9 ' + 
+        ChangeFileExt(current_module.exefilename,'.nds') + ' -9 ' + 
         ChangeFileExt(current_module.exefilename,'.elf'),
         true,false);
     end;

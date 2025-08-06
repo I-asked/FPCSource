@@ -75,15 +75,15 @@ end;
 
 function divf32(num: cint32; den: cint32): cint32; inline;
 begin
-  REG_DIV_NUMER^ := cint64(num) shl 12;
-  REG_DIV_DENOM_L^ := den;
+  volatile(REG_DIV_NUMER^) := cint64(num) shl 12;
+  volatile(REG_DIV_DENOM_L^) := den;
 
-  if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_64_32 then
-    REG_DIVCNT^ := DIV_64_32;
+  if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_64_32 then
+    volatile(REG_DIVCNT^) := DIV_64_32;
 
-  while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
+  while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
 
-  divf32 := REG_DIV_RESULT_L^;
+  divf32 := volatile(REG_DIV_RESULT_L^);
 end;
 
 function mulf32(a, b: cint32): cint32; inline;
@@ -99,14 +99,14 @@ end;
 //  returns the fixed point result
 function sqrtf32(a: cint32): cint32; inline;
 begin
-  REG_SQRT_PARAM^ := cuint64(a) shl 12;
+  volatile(REG_SQRT_PARAM^) := cuint64(a) shl 12;
 
-  if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
-    REG_SQRTCNT^ := SQRT_64;
+  if (volatile(REG_SQRTCNT^) and SQRT_MODE_MASK) <> SQRT_64 then
+    volatile(REG_SQRTCNT^) := SQRT_64;
 
-  while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;
+  while (volatile(REG_SQRTCNT^) and SQRT_BUSY) <> 0 do;
 
-  sqrtf32 := REG_SQRT_RESULT^;
+  sqrtf32 := volatile(REG_SQRT_RESULT^);
 end;
 
 //  Integer versions
@@ -116,15 +116,15 @@ end;
 //  denominator and returns 32 bit result
 function div32(num, den: cint32): cint32; inline;
 begin
-  REG_DIV_NUMER_L^ := num;
-  REG_DIV_DENOM_L^ := den;
+  volatile(REG_DIV_NUMER_L^) := num;
+  volatile(REG_DIV_DENOM_L^) := den;
 
-  if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_32_32 then
-    REG_DIVCNT^ := DIV_32_32;
+  if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_32_32 then
+    volatile(REG_DIVCNT^) := DIV_32_32;
 
-  while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
+  while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
 
-  div32 := REG_DIV_RESULT_L^;
+  div32 := volatile(REG_DIV_RESULT_L^);
 end;
 
 //  Integer divide
@@ -132,15 +132,15 @@ end;
 //  denominator and returns 32 bit result
 function mod32(num, den: cint32): cint32; inline;
 begin
-  REG_DIV_NUMER_L^ := num;
-  REG_DIV_DENOM_L^ := den;
+  volatile(REG_DIV_NUMER_L^) := num;
+  volatile(REG_DIV_DENOM_L^) := den;
 
-  if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_32_32 then
-    REG_DIVCNT^ := DIV_32_32;
+  if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_32_32 then
+    volatile(REG_DIVCNT^) := DIV_32_32;
 
-  while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
+  while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
 
-  mod32 := REG_DIVREM_RESULT_L^;
+  mod32 := volatile(REG_DIVREM_RESULT_L^);
 end;
 
 //  Integer divide
@@ -148,15 +148,15 @@ end;
 //  denominator are returns 32 bit result
 function div64(num: cint64; den: cint32): cint32; inline;
 begin
-  REG_DIV_NUMER^ := num;
-  REG_DIV_DENOM_L^ := den;
+  volatile(REG_DIV_NUMER^) := num;
+  volatile(REG_DIV_DENOM_L^) := den;
 
-  if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_64_32 then
-    REG_DIVCNT^ := DIV_64_32;
+  if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_64_32 then
+    volatile(REG_DIVCNT^) := DIV_64_32;
 
-  while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
+  while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
 
-  div64 := REG_DIV_RESULT_L^;
+  div64 := volatile(REG_DIV_RESULT_L^);
 end;
 
 //  Integer divide
@@ -164,15 +164,15 @@ end;
 //  denominator are returns 32 bit result
 function mod64(num: cint64; den: cint32): cint32; inline;
 begin
-  REG_DIV_NUMER^ := num;
-  REG_DIV_DENOM_L^ := den;
+  volatile(REG_DIV_NUMER^) := num;
+  volatile(REG_DIV_DENOM_L^) := den;
 
-  if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_64_32 then
-    REG_DIVCNT^ := DIV_64_32;
+  if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_64_32 then
+    volatile(REG_DIVCNT^) := DIV_64_32;
 
-  while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
+  while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
 
-  mod64 := REG_DIVREM_RESULT_L^;
+  mod64 := volatile(REG_DIVREM_RESULT_L^);
 end;
 
 //  Integer square root
@@ -180,26 +180,26 @@ end;
 //  32 bit result
 function sqrt32(a: cint32): cuint32; inline;
 begin
-  REG_SQRT_PARAM_L^ := a;
+  volatile(REG_SQRT_PARAM_L^) := a;
 
-  if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_32 then
-    REG_SQRTCNT^ := SQRT_32;
+  if (volatile(REG_SQRTCNT^) and SQRT_MODE_MASK) <> SQRT_32 then
+    volatile(REG_SQRTCNT^) := SQRT_32;
 
-  while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;
+  while (volatile(REG_SQRTCNT^) and SQRT_BUSY) <> 0 do;
 
-  sqrt32 := REG_SQRT_RESULT^;
+  sqrt32 := volatile(REG_SQRT_RESULT^);
 end;
 
 function sqrt64(a: cint64): cuint32; inline;
 begin
-  REG_SQRT_PARAM^ := a;
+  volatile(REG_SQRT_PARAM^) := a;
 
-  if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
-    REG_SQRTCNT^ := SQRT_64;
+  if (volatile(REG_SQRTCNT^) and SQRT_MODE_MASK) <> SQRT_64 then
+    volatile(REG_SQRTCNT^) := SQRT_64;
 
-  while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;
+  while (volatile(REG_SQRTCNT^) and SQRT_BUSY) <> 0 do;
 
-  sqrt64 := REG_SQRT_RESULT^;
+  sqrt64 := volatile(REG_SQRT_RESULT^);
 end;
 
 procedure crossf32(a: pcint32; b: pcint32; res: pcint32); inline;
@@ -255,21 +255,21 @@ begin
     else
       msq := msq shl -zc;
 
-    REG_DIV_NUMER^ := 1 shl 62;
-    REG_DIV_DENOM_L^ := msq;
-    if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_64_32 then
-      REG_DIVCNT^ := DIV_64_32;
+    volatile(REG_DIV_NUMER^) := 1 shl 62;
+    volatile(REG_DIV_DENOM_L^) := msq;
+    if (volatile(REG_DIVCNT^) and DIV_MODE_MASK) <> DIV_64_32 then
+      volatile(REG_DIVCNT^) := DIV_64_32;
 
-    REG_SQRT_PARAM^ := msq shl 32;
-    if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
-      REG_SQRTCNT^ := SQRT_64;
+    volatile(REG_SQRT_PARAM^) := msq shl 32;
+    if (volatile(REG_SQRTCNT^) and SQRT_MODE_MASK) <> SQRT_64 then
+      volatile(REG_SQRTCNT^) := SQRT_64;
 
     totsh := 32 + 8 - 6 + (zc shr 1);
-    while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;
-    root := REG_SQRT_RESULT^;
+    while (volatile(REG_SQRTCNT^) and SQRT_BUSY) <> 0 do;
+    root := volatile(REG_SQRT_RESULT^);
 
-    while (REG_DIVCNT^ and DIV_BUSY) <> 0 do;
-    rcp := REG_DIV_RESULT^;
+    while (volatile(REG_DIVCNT^) and DIV_BUSY) <> 0 do;
+    rcp := volatile(REG_DIV_RESULT^);
 
     sh := 32 - _clz(rms);
     dec(totsh, sh);

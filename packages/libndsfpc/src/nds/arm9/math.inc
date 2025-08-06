@@ -256,14 +256,14 @@ begin
     else
       msq := msq shl -zc;
 
-    REG_DIVCNT^ := DIV_64_32;
     REG_DIV_NUMER^ := 1 shl 62;
     REG_DIV_DENOM_L^ := msq;
-
-    if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
-      REG_SQRTCNT^ := SQRT_64;
+    if (REG_DIVCNT^ and DIV_MODE_MASK) <> DIV_64_32 then
+      REG_DIVCNT^ := DIV_64_32;
 
     REG_SQRT_PARAM^ := msq shl 32;
+    if (REG_SQRTCNT^ and SQRT_MODE_MASK) <> SQRT_64 then
+      REG_SQRTCNT^ := SQRT_64;
 
     totsh := 32 + 8 - 6 + (zc shr 1);
     while (REG_SQRTCNT^ and SQRT_BUSY) <> 0 do;

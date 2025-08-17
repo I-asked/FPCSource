@@ -70,6 +70,8 @@ const
   sLineBreak = LineEnding;
   DefaultTextLineBreakStyle : TTextLineBreakStyle = tlbsLF;
 
+  defaultEnv : PAnsiChar = nil;
+
 var
   argc: LongInt = 0;
   argv: PPAnsiChar;
@@ -125,7 +127,7 @@ end;
 *****************************************************************************}
 procedure System_exit;
 begin
-  // Boo!
+  Fpexit(longint(ExitCode));
 end;
 
 {*****************************************************************************
@@ -145,21 +147,11 @@ Begin
   Paramcount:=argc-1
 End;
 
-
- { variable where full path and filename and executable is stored }
- { is setup by the startup of the system unit.                    }
-var
- execpathstr : shortstring;
-
 function paramstr(l: longint) : shortstring;
  begin
    { stricly conforming POSIX applications  }
    { have the executing filename as argv[0] }
-   if l=0 then
-     begin
-       paramstr := execpathstr;
-     end
-   else if (l > 0) and (l < argc) then
+   if (l >= 0) and (l < argc) then
      paramstr := strpas(argv[l])
   else
     paramstr := '';
@@ -261,6 +253,23 @@ begin
   result := stklen;
 end;
 
+procedure pascalmain;external name 'PASCALMAIN';
+
+procedure FPC_SYSTEMMAIN(argcparam: Longint; argvparam: PPAnsiChar; envpparam: PPAnsiChar); cdecl; [public];
+begin
+  if IsARM9 then
+  begin
+    argc:= argcparam;
+    argv:= argvparam;
+  end
+  else
+  begin
+    argc:= 0;
+    argv:= nil;
+  end;
+  envp:= @defaultEnv;
+  pascalmain;  {run the pascal main program}
+end;
 
 begin
   StackLength := CheckInitialStkLen(InitialStkLen);

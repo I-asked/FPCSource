@@ -61,6 +61,8 @@ type
   TSort = function (const a, b: pointer): integer;
 procedure qsort(__base: pointer; __nmemb: integer; __size: integer; __compar: TSort); cdecl; external;
 
+procedure Fpexit(status:longint); external name 'exit';
+
 function fpgeterrno:longint; external name 'FPC_SYS_GETERRNO';
 procedure fpseterrno(err:longint); external name 'FPC_SYS_SETERRNO';
 property errno : longint read fpgeterrno write fpseterrno;

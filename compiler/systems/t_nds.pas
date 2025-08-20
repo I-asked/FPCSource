@@ -170,50 +170,29 @@ begin
      end;
    end;
 
-  if (cs_link_on_target in current_settings.globalswitches) then
-   begin
-    LinkRes.Add(')');
-
-    { Write sharedlibraries like -l<lib>, also add the needed dynamic linker
-      here to be sure that it gets linked this is needed for glibc2 systems (PFV) }
-    linklibc:=false;
-    linklibgcc:=false;
-    while not SharedLibFiles.Empty do
-     begin
-      S:=SharedLibFiles.GetFirst;
-      if s<>'c' then
-       begin
-        i:=Pos(target_info.sharedlibext,S);
-        if i>0 then
-         Delete(S,i,255);
-        LinkRes.Add('-l'+s);
-       end
-      else
-       begin
-        LinkRes.Add('-l'+s);
-        linklibc:=true;
-        linklibgcc:=true;
-       end;
+  while not SharedLibFiles.Empty do
+  begin
+   S:=SharedLibFiles.GetFirst;
+   case s of
+     'c': begin
+       LinkRes.Add('lib'+s+target_info.staticlibext);
+       linklibc:=true;
+       linklibgcc:=true;
      end;
-    { be sure that libc&libgcc is the last lib }
-    if linklibgcc then
-     begin
-      LinkRes.Add('-lgcc');
+     'nds9', 'nds7': begin
+       if cs_debuginfo in current_settings.moduleswitches then
+         LinkRes.Add('lib'+s+'d'+target_info.staticlibext)
+       else
+         LinkRes.Add('lib'+s+target_info.staticlibext);
      end;
-    if linklibc then
-     begin
-      LinkRes.Add('-lc');
-     end;
-   end
-  else
-   begin
-    while not SharedLibFiles.Empty do
-     begin
-      S:=SharedLibFiles.GetFirst;
-      LinkRes.Add('lib'+s+target_info.staticlibext);
-     end;
-    LinkRes.Add(')');
+   else
+     i:=Pos(target_info.sharedlibext,S);
+     if i>0 then
+       Delete(S,i,255);
+     LinkRes.Add('lib'+s+target_info.staticlibext);
    end;
+  end;
+  LinkRes.Add(')');
 
   { objects which must be at the end }
   if linklibgcc then
